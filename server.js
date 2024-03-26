@@ -1,4 +1,8 @@
 const express = require("express");
+const bodyParser = require("body-parser");
+const todosRouter = require("./src/routes/todosRouter");
+
+// Create an express application
 const app = express();
 
 // Load environment variables from .env file
