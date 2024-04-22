@@ -11,37 +11,39 @@ pipeline {
         stage('Build Frontend Image') {
             steps {
                 script {
-                    docker.build(FRONTEND_IMAGE, "-f frontend/Dockerfile .")
+                    echo "Building frontend image..."
+                    docker.build(FRONTEND_IMAGE, "-f frontend/Dockerfile frontend/")
+                    echo "Frontend image built successfully."
                 }
             }
         }
         
-        stage('Push Frontend Image') {
-            steps {
-                script {
-                    docker.withRegistry('', 'dockerhub-credentials') {
-                        docker.image(FRONTEND_IMAGE).push()
-                    }
-                }
-            }
-        }
+        // stage('Push Frontend Image') {
+        //     steps {
+        //         script {
+        //             docker.withRegistry('', 'dockerhub-credentials') {
+        //                 docker.image(FRONTEND_IMAGE).push()
+        //             }
+        //         }
+        //     }
+        // }
         
-        stage('Build Backend Image') {
-            steps {
-                script {
-                    docker.build(BACKEND_IMAGE, "-f backend/Dockerfile .")
-                }
-            }
-        }
+        // stage('Build Backend Image') {
+        //     steps {
+        //         script {
+        //             docker.build(BACKEND_IMAGE, "-f backend/Dockerfile .")
+        //         }
+        //     }
+        // }
         
-        stage('Push Backend Image') {
-            steps {
-                script {
-                    docker.withRegistry('', 'dockerhub-credentials') {
-                        docker.image(BACKEND_IMAGE).push()
-                    }
-                }
-            }
-        }
+        // stage('Push Backend Image') {
+        //     steps {
+        //         script {
+        //             docker.withRegistry('', 'dockerhub-credentials') {
+        //                 docker.image(BACKEND_IMAGE).push()
+        //             }
+        //         }
+        //     }
+        // }
     }
 }
