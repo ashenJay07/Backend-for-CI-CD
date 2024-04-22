@@ -1,41 +1,71 @@
 pipeline {
     agent any
-
-    stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/ashenJay07/Backend-for-CI-CD.git'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                sh 'docker build -t ashendev7/ctse-assignment:${env.BUILD_ID} .'
-            }
-        }
-
-        stage('Push') {
-            steps {
-                sh 'docker push ashendev7/ctse-assignment:${env.BUILD_ID}'
-            }
-        }
+    
+    environment {
+        DOCKER_REGISTRY = "ashendev7"
+        FRONTEND_IMAGE = "${DOCKER_REGISTRY}/frontend-image"
+        BACKEND_IMAGE = "${DOCKER_REGISTRY}/backend-image"
     }
-
-    post {
-        always {
-            junit 'reports/**/*.xml'
-            archiveArtifacts 'dist/**/*'
-            sh 'npm run postbuild'
+    
+    stages {
+        stage('Build Frontend Image') {
+            steps {
+                script {
+                    try {
+                        docker.build(FRONTEND_IMAGE, "-f frontend/Dockerfile .")
+                        echo "Frontend image built successfully: ${FRONTEND_IMAGE}"
+                    } catch (err) {
+                        echo "Error building frontend image: ${err}"
+                        currentBuild.result = 'FAILURE'
+                    }
+                }
+            }
         }
-        success {
-            echo 'Pipeline completed successfully'
+        
+        stage('Push Frontend Image') {
+            steps {
+                script {
+                    try {
+                        docker.withRegistry('', 'dockerhub-credentials') {
+                            docker.image(FRONTEND_IMAGE).push()
+                            echo "Frontend image pushed successfully: ${FRONTEND_IMAGE}"
+                        }
+                    } catch (err) {
+                        echo "Error pushing frontend image: ${err}"
+                        currentBuild.result = 'FAILURE'
+                    }
+                }
+            }
         }
-        failure {
-            echo 'Pipeline failed'
-            mail to: 'you@example.com',
-                 subject: 'Pipeline failed',
-                 body: 'Pipeline failed in ${env.BUILD_NUMBER}',
-                 from: 'jenkins@example.com'
+        
+        stage('Build Backend Image') {
+            steps {
+                script {
+                    try {
+                        docker.build(BACKEND_IMAGE, "-f backend/Dockerfile .")
+                        echo "Backend image built successfully: ${BACKEND_IMAGE}"
+                    } catch (err) {
+                        echo "Error building backend image: ${err}"
+                        currentBuild.result = 'FAILURE'
+                    }
+                }
+            }
+        }
+        
+        stage('Push Backend Image') {
+            steps {
+                script {
+                    try {
+                        docker.withRegistry('', 'dockerhub-credentials') {
+                            docker.image(BACKEND_IMAGE).push()
+                            echo "Backend image pushed successfully: ${BACKEND_IMAGE}"
+                        }
+                    } catch (err) {
+                        echo "Error pushing backend image: ${err}"
+                        currentBuild.result = 'FAILURE'
+                    }
+                }
+            }
         }
     }
 }
