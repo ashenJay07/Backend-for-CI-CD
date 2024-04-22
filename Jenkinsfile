@@ -8,6 +8,14 @@ pipeline {
     }
     
     stages {
+        stage('Check Docker Version') {
+            steps {
+                script {
+                    sh 'docker --version'
+                }
+            }
+        }
+        
         stage('Build Frontend Image') {
             steps {
                 script {
