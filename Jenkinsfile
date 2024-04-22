@@ -1,41 +1,47 @@
 pipeline {
     agent any
-
-    stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/ashenJay07/Backend-for-CI-CD.git'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                sh 'docker build -t ashendev7/ctse-assignment:${env.BUILD_ID} .'
-            }
-        }
-
-        stage('Push') {
-            steps {
-                sh 'docker push ashendev7/ctse-assignment:${env.BUILD_ID}'
-            }
-        }
+    
+    environment {
+        DOCKER_REGISTRY = "ashendev7"
+        FRONTEND_IMAGE = "${DOCKER_REGISTRY}/frontend-image"
+        BACKEND_IMAGE = "${DOCKER_REGISTRY}/backend-image"
     }
-
-    post {
-        always {
-            junit 'reports/**/*.xml'
-            archiveArtifacts 'dist/**/*'
-            sh 'npm run postbuild'
+    
+    stages {
+        stage('Build Frontend Image') {
+            steps {
+                script {
+                    docker.build(FRONTEND_IMAGE, "-f frontend/Dockerfile .")
+                }
+            }
         }
-        success {
-            echo 'Pipeline completed successfully'
+        
+        stage('Push Frontend Image') {
+            steps {
+                script {
+                    docker.withRegistry('', 'dockerhub-credentials') {
+                        docker.image(FRONTEND_IMAGE).push()
+                    }
+                }
+            }
         }
-        failure {
-            echo 'Pipeline failed'
-            mail to: 'you@example.com',
-                 subject: 'Pipeline failed',
-                 body: 'Pipeline failed in ${env.BUILD_NUMBER}',
-                 from: 'jenkins@example.com'
+        
+        stage('Build Backend Image') {
+            steps {
+                script {
+                    docker.build(BACKEND_IMAGE, "-f backend/Dockerfile .")
+                }
+            }
+        }
+        
+        stage('Push Backend Image') {
+            steps {
+                script {
+                    docker.withRegistry('', 'dockerhub-credentials') {
+                        docker.image(BACKEND_IMAGE).push()
+                    }
+                }
+            }
         }
     }
 }
